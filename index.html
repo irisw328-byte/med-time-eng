@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meds">
+<title>Meds</title>
+<style>
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    text-align: center; 
+    margin: 0; 
+    padding: 0;
+    background-color: #f4f7f6; 
+    color: #333;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .container { 
+    width: 100%; 
+    min-height: 100vh;
+    box-sizing: border-box;
+    background: white; 
+    padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 20px) 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  h2 { margin-top: 20px; color: #222; font-size: 28px; font-weight: 800; margin-bottom: 5px; }
+  
+  .greeting-text {
+    font-size: 24px;
+    color: #e65100;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .settings-toggle {
+    position: absolute;
+    top: max(20px, env(safe-area-inset-top));
+    right: 20px;
+    background: #e0e0e0;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+  }
+
+  .med-options { 
+    display: flex; 
+    justify-content: center; 
+    gap: 15px; 
+    margin: 15px 0 25px 0; 
+    flex-wrap: wrap;
+  }
+  .med-btn { 
+    padding: 14px 22px;
+    border-radius: 24px; 
+    border: 2px solid #eee; 
+    background-color: #fafafa; 
+    font-size: 20px; 
+    font-weight: bold;
+    cursor: pointer; 
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #555;
+  }
+  .med-btn.active { 
+    background-color: #ff9800; 
+    color: white; 
+    border-color: #ff9800; 
+    box-shadow: 0 6px 15px rgba(255, 152, 0, 0.3);
+  }
+
+  .notice-box {
+    background-color: #fff8e1;
+    border-left: 6px solid #ffb300;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 12px;
+    text-align: left;
+    font-size: 18px;
+  }
+  .notice-title { font-weight: bold; color: #b78103; margin-bottom: 6px; }
+
+  .punch-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; margin: 10px 0; }
+  .punch-btn { 
+    width: 220px; height: 220px; 
+    border-radius: 50%; 
+    background-color: #ff4d4d; 
+    color: white; 
+    font-size: 38px; 
+    font-weight: 900; 
+    border: none; 
+    cursor: pointer; 
+    box-shadow: 0 12px 30px rgba(255, 77, 77, 0.4); 
+    transition: transform 0.1s;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .punch-btn:active { transform: scale(0.92); background-color: #e60000; }
+
+  .status-box { 
+    font-size: 20px; 
+    text-align: left; 
+    padding: 20px; 
+    background: #f0f4f8; 
+    border-radius: 20px; 
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .alert { color: #d32f2f; font-weight: bold; display: block; margin-top: 10px; font-size: 22px; }
+  .ok { color: #388e3c; font-weight: bold; display: block; margin-top: 10px; }
+
+  .history-toggle-btn {
+    width: 100%; padding: 16px; background: #e3f2fd; color: #1e88e5; border: 2px dashed #1e88e5; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer;
+  }
+  .history-log-box {
+    margin-top: 15px; background: #fafafa; border: 1px solid #eee; border-radius: 16px; padding: 15px; text-align: left; font-size: 18px;
+  }
+  
+  .history-filter {
+    display: flex; gap: 10px; margin-bottom: 15px;
+  }
+  .filter-btn {
+    flex: 1; padding: 10px; border: 2px solid #2196F3; background: white; color: #2196F3; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+  }
+  .filter-btn.active {
+    background: #2196F3; color: white;
+  }
+
+  .history-list-container {
+    max-height: 250px; overflow-y: auto;
+  }
+  .history-item { padding: 12px 0; border-bottom: 1px solid #ddd; color: #444; display: flex; align-items: center; gap: 10px; }
+  .history-item:last-child { border-bottom: none; }
+  .history-time { color: #666; font-size: 16px; min-width: 130px; }
+  .history-med-name { font-weight: bold; font-size: 18px; color: #1e88e5; }
+
+  .hidden { display: none !important; }
+  
+  .setup-section { margin-top: 20px; padding-bottom: 25px; border-bottom: 2px dashed #eee; text-align: left; }
+  .setup-form { text-align: left; margin-top: 40px; }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 18px; }
+  .form-group input, .form-group select { 
+    width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 18px; box-sizing: border-box; background: #fff;
+  }
+  .action-btn {
+    width: 100%; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: 15px;
+  }
+  .save-name-btn {
+    background: #2196F3; color: white; border: none; border-radius: 12px; padding: 0 20px; font-size: 18px; font-weight: bold; cursor: pointer; white-space: nowrap;
+  }
+  
+  .med-manager-list { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; text-align: left; }
+  .manager-item { 
+    display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f9f9f9; border-radius: 12px; margin-bottom: 12px; font-size: 18px;
+  }
+  .delete-btn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+
+  .export-box {
+    margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 16px; border: 2px dashed #90caf9; text-align: left;
+  }
+  .export-title { font-size: 20px; color: #1565c0; font-weight: bold; margin-bottom: 10px; }
+  .export-desc { font-size: 16px; color: #555; margin-bottom: 15px; line-height: 1.5; }
+  .export-btn { width: 100%; padding: 14px; background: #1976D2; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
+  .training-box {
+    margin-top: 20px; padding: 20px; background: #ffebee; border-radius: 16px; border: 2px dashed #ffcdd2; text-align: left;
+  }
+  .training-title { font-size: 20px; color: #c62828; font-weight: bold; margin-bottom: 10px; }
+  .training-desc { font-size: 16px; color: #555; margin-bottom: 15px; line-height: 1.5; }
+  .reset-btn { width: 100%; padding: 14px; background: #f44336; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white; padding: 40px 25px; border-radius: 30px;
+    text-align: center; width: 85%; max-width: 400px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-title { font-size: 32px; color: #4CAF50; font-weight: 900; margin-bottom: 15px; }
+  .modal-subtitle { font-size: 22px; color: #555; margin-bottom: 10px; }
+  .modal-time { font-size: 65px; color: #ff4d4d; font-weight: 900; margin-bottom: 30px; line-height: 1; }
+  .close-modal-btn {
+    background: #2196F3; color: white; border: none; padding: 18px;
+    font-size: 24px; font-weight: bold; border-radius: 16px; cursor: pointer; width: 100%; margin-bottom: 15px;
+  }
+  .undo-modal-btn {
+    background: #e0e0e0; color: #555; border: none; padding: 14px;
+    font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div id="main-view" style="display:flex; flex-direction:column; height:100%;">
+    <button class="settings-toggle" onclick="toggleView(true)">⚙️ Settings</button>
+    
+    <h2>💊 Pill Reminder</h2>
+    <div class="greeting-text" id="main-greeting">😊 Hello There! 👋🏻</div>
+
+    <div class="med-options" id="med-buttons-container"></div>
+
+    <div class="notice-box">
+      <div class="notice-title">💡 Instructions / Notes:</div>
+      <div id="med-notice">No special instructions.</div>
+    </div>
+
+    <div class="punch-container">
+      <button class="punch-btn" onclick="punchMedicine()">Log Meds</button>
+    </div>
+
+    <div class="status-box" id="status-container">
+      No records yet.
+    </div>
+
+    <div>
+      <button class="history-toggle-btn" onclick="toggleHistoryZone()">📊 View Last 3 Days</button>
+      <div id="history-log-box" class="history-log-box hidden">
+        <div class="history-filter">
+          <button id="filter-all" class="filter-btn active" onclick="setHistoryFilter('all')">Show All</button>
+          <button id="filter-current" class="filter-btn" onclick="setHistoryFilter('current')">Current Med Only</button>
+        </div>
+        <div class="history-list-container" id="history-list-items">No records available.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-view" class="hidden">
+    <button class="settings-toggle" onclick="toggleView(false)">⬅️ Back</button>
+    <h2 style="margin-top: 40px;">⚙️ System Settings</h2>
+    
+    <div class="setup-section">
+      <div class="form-group">
+        <label>👤 Display Name</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="setting-user-name" placeholder="e.g., Dad, Mom">
+          <button class="save-name-btn" onclick="saveUserName()">Save</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label>🔐 Admin Password</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="setting-password" placeholder="e.g., 1234">
+          <button class="save-name-btn" onclick="savePassword()">Save</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="setup-form">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;">➕ Add Medication</h3>
+      <div class="form-group">
+        <label>Medication Name</label>
+        <input type="text" id="new-med-name" placeholder="e.g., Blood Pressure Med">
+      </div>
+      <div class="form-group">
+        <label>Pill Icon</label>
+        <select id="new-med-icon">
+          <option value="💊">💊 Capsule</option>
+          <option value="🔴">🔴 Red Round Pill</option>
+          <option value="🟡">🟡 Yellow Round Pill</option>
+          <option value="⚪">⚪ White Tablet</option>
+          <option value="🟩">🟩 Green Square Pill</option>
+          <option value="💧">💧 Liquid / Drops</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Frequency / Times per Day</label>
+        <select id="new-med-interval">
+          <option value="24">Once a day (Every 24 hrs)</option>
+          <option value="12">Twice a day (Every 12 hrs)</option>
+          <option value="5" selected>3 times a day (With meals, ~5 hrs)</option>
+          <option value="4">4 times a day (Meals + Bedtime, ~4 hrs)</option>
+          <option disabled>──────────────</option>
+          <option value="4">Strictly every 4 hours</option>
+          <option value="5">Strictly every 5 hours</option>
+          <option value="6">Strictly every 6 hours</option>
+          <option value="8">Strictly every 8 hours</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Notes / Instructions</label>
+        <input type="text" id="new-med-notice" placeholder="e.g., Take after meals">
+      </div>
+      <button class="action-btn" onclick="addMedication()">Add Medication</button>
+    </div>
+
+    <div class="export-box">
+      <div class="export-title">🖨️ Export History</div>
+      <div class="export-desc">Download all records as a CSV (Excel) file for easy printing and doctor visits.</div>
+      <button class="export-btn" onclick="exportFullHistory()">📄 Download Full Record</button>
+    </div>
+
+    <div class="training-box">
+      <div class="training-title">🛠️ Training Mode / Reset</div>
+      <div class="training-desc">Let the user practice taking meds. Once done, click below to clear practice records.</div>
+      <button class="reset-btn" onclick="clearTrainingData()">🧹 Clear Current Med Records</button>
+    </div>
+
+    <div class="med-manager-list">
+      <h3 style="margin-bottom: 15px; font-size: 20px;">Tracked Medications:</h3>
+      <div id="manager-items-container"></div>
+    </div>
+  </div>
+</div>
+
+<div id="punch-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-title">✅ Logged Successfully!</div>
+    <div class="modal-subtitle">Next dose at:</div>
+    <div class="modal-time" id="modal-next-time">18:00</div>
+    <button class="close-modal-btn" onclick="closeModal()">Got it</button>
+    <button class="undo-modal-btn" onclick="undoLastPunch()">❌ Undo (Mistake)</button>
+  </div>
+</div>
+
+<script>
+  const defaultMedications = [
+    { name: 'Cold Medicine', interval: 5, notice: '3 times a day, after meals.', icon: '💊' },
+    { name: 'Blood Pressure Med', interval: 24, notice: 'Once a day, in the morning.', icon: '🔴' }
+  ];
+
+  let medications = [];
+  let currentMedName = '';
+  let showHistory = false;
+  let userName = 'There';
+  let historyFilterMode = 'all';
+  // 🌟 預設密碼改為 1234
+  let systemPassword = '1234'; 
+
+  function playDingSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine'; osc1.frequency.setValueAtTime(880, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc1.connect(gain1); gain1.connect(ctx.destination);
+      osc1.start(); osc1.stop(ctx.currentTime + 0.15);
+
+      setTimeout(() => {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(1318.5, ctx.currentTime);
+        gain2.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc2.connect(gain2); gain2.connect(ctx.destination);
+        osc2.start(); osc2.stop(ctx.currentTime + 0.3);
+      }, 100);
+    } catch (e) { console.log(e); }
+  }
+
+  function initSystem() {
+    const storedName = localStorage.getItem('med_user_name_en');
+    if (storedName) userName = storedName;
+    document.getElementById('setting-user-name').value = userName;
+    updateGreetingDisplay();
+
+    // 🌟 讀取自訂密碼
+    const storedPwd = localStorage.getItem('med_system_password_en');
+    if (storedPwd) systemPassword = storedPwd;
+    document.getElementById('setting-password').value = systemPassword;
+
+    const storedMeds = localStorage.getItem('user_medications_en');
+    if (storedMeds) {
+      medications = JSON.parse(storedMeds);
+    } else {
+      medications = defaultMedications;
+      localStorage.setItem('user_medications_en', JSON.stringify(medications));
+    }
+    if (medications.length > 0 && !currentMedName) currentMedName = medications[0].name;
+    
+    renderMainButtons(); renderManagerList(); updateStatusDisplay();
+  }
+
+  function updateGreetingDisplay() {
+    document.getElementById('main-greeting').innerText = `😊 Hello ${userName}! 👋🏻`;
+  }
+
+  function saveUserName() {
+    const newName = document.getElementById('setting-user-name').value.trim();
+    if (!newName) { alert("Name cannot be empty!"); return; }
+    userName = newName;
+    localStorage.setItem('med_user_name_en', userName);
+    updateGreetingDisplay();
+    alert(`✅ Name updated successfully to "${userName}"!`);
+  }
+
+  // 🌟 儲存新密碼的功能
+  function savePassword() {
+    const newPwd = document.getElementById('setting-password').value.trim();
+    if (!newPwd) { alert("Password cannot be empty!"); return; }
+    systemPassword = newPwd;
+    localStorage.setItem('med_system_password_en', systemPassword);
+    alert(`✅ Admin password updated successfully!`);
+  }
+
+  function toggleView(showSettings) {
+    if (showSettings) {
+      const pwd = prompt("🔐 Enter password for settings:");
+      // 🌟 比對的密碼改成變數，不再寫死
+      if (pwd !== systemPassword) {
+        if (pwd !== null) alert("❌ Incorrect password!");
+        return; 
+      }
+      document.getElementById('main-view').classList.add('hidden');
+      document.getElementById('settings-view').classList.remove('hidden');
+    } else {
+      document.getElementById('settings-view').classList.add('hidden');
+      document.getElementById('main-view').classList.remove('hidden');
+      updateStatusDisplay();
+    }
+  }
+
+  function renderMainButtons() {
+    const container = document.getElementById('med-buttons-container');
+    container.innerHTML = '';
+    medications.forEach(med => {
+      const btn = document.createElement('button');
+      btn.className = `med-btn ${med.name === currentMedName ? 'active' : ''}`;
+      btn.innerHTML = `<span>${med.icon || '💊'}</span> ${med.name}`;
+      btn.onclick = () => selectMed(med.name);
+      container.appendChild(btn);
+    });
+  }
+
+  function getFrequencyText(interval) {
+    if (interval === 24) return 'Once a day (24 hrs)';
+    if (interval === 12) return 'Twice a day (12 hrs)';
+    if (interval === 5) return 'Every 5 hrs / 3 times a day';
+    if (interval === 4) return 'Every 4 hrs / 4 times a day';
+    if (interval === 6) return 'Every 6 hrs';
+    if (interval === 8) return 'Every 8 hrs';
+    return `Every ${interval} hrs`;
+  }
+
+  function renderManagerList() {
+    const container = document.getElementById('manager-items-container');
+    container.innerHTML = '';
+    medications.forEach((med, index) => {
+      const item = document.createElement('div');
+      item.className = 'manager-item';
+      item.innerHTML = `
+        <div>
+          <strong>${med.icon || '💊'} ${med.name}</strong> (${getFrequencyText(med.interval)})<br>
+          <span style="font-size:15px; color:#666;">📝 ${med.notice || 'No notes'}</span>
+        </div>
+        <button class="delete-btn" onclick="deleteMedication(${index})">Delete</button>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  function addMedication() {
+    const nameInput = document.getElementById('new-med-name');
+    const iconSelect = document.getElementById('new-med-icon');
+    const intervalSelect = document.getElementById('new-med-interval');
+    const noticeInput = document.getElementById('new-med-notice');
+    const name = nameInput.value.trim(); const icon = iconSelect.value;
+    const interval = parseInt(intervalSelect.value); const notice = noticeInput.value.trim();
+    
+    if (!name) { alert('Please enter a medication name!'); return; }
+    if (medications.some(m => m.name === name)) { alert('Medication already exists!'); return; }
+    
+    medications.push({ name, interval, notice, icon });
+    localStorage.setItem('user_medications_en', JSON.stringify(medications));
+    nameInput.value = ''; noticeInput.value = ''; currentMedName = name; 
+    renderMainButtons(); renderManagerList();
+    alert(`Successfully added "${name}"!`);
+  }
+
+  function deleteMedication(index) {
+    const removedName = medications[index].name;
+    if (confirm(`Are you sure you want to delete "${removedName}"? All records will be lost.`)) {
+      localStorage.removeItem('med_history_arr_en_' + removedName);
+      medications.splice(index, 1);
+      localStorage.setItem('user_medications_en', JSON.stringify(medications));
+      if (currentMedName === removedName) currentMedName = medications.length > 0 ? medications[0].name : '';
+      renderMainButtons(); renderManagerList();
+    }
+  }
+
+  function clearTrainingData() {
+    if (!currentMedName) { alert("No medication selected!"); return; }
+    if (confirm(`Are you sure you want to clear all records for [${currentMedName}]?\nUse this to reset after practice.`)) {
+      localStorage.removeItem('med_history_arr_en_' + currentMedName);
+      alert(`✅ All records cleared. Ready to start fresh!`);
+      if (showHistory) renderHistoryList();
+    }
+  }
+
+  function exportFullHistory() {
+    let combinedHistory = [];
+    
+    medications.forEach(med => {
+      const saved = localStorage.getItem('med_history_arr_en_' + med.name);
+      if (saved) {
+        const arr = JSON.parse(saved);
+        arr.forEach(ts => {
+          combinedHistory.push({ ts: ts, name: med.name });
+        });
+      }
+    });
+
+    if (combinedHistory.length === 0) {
+      alert('No records to export yet!');
+      return;
+    }
+
+    combinedHistory.sort((a, b) => b.ts - a.ts);
+
+    let csvContent = "\uFEFF"; 
+    csvContent += "Date,Time,Medication Name\n";
+
+    combinedHistory.forEach(item => {
+      const d = new Date(item.ts);
+      const dateStr = d.toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'});
+      const timeStr = d.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+      csvContent += `${dateStr},${timeStr},${item.name}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const todayStr = new Date().toLocaleDateString('en-US').replace(/\//g, '');
+    link.setAttribute("download", `${userName}s_Med_Records_${todayStr}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function selectMed(medName) {
+    currentMedName = medName;
+    document.querySelectorAll('.med-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.textContent.includes(medName)) btn.classList.add('active');
+    });
+    updateStatusDisplay();
+  }
+
+  function punchMedicine() {
+    if (!currentMedName) { alert('Please add a medication in settings first!'); return; }
+    playDingSound();
+    
+    const now = new Date(); const timestamp = now.getTime();
+    let historyArr = [];
+    const savedHistory = localStorage.getItem('med_history_arr_en_' + currentMedName);
+    if (savedHistory) historyArr = JSON.parse(savedHistory);
+    
+    historyArr.push(timestamp);
+    localStorage.setItem('med_history_arr_en_' + currentMedName, JSON.stringify(historyArr));
+    
+    const currentMed = medications.find(m => m.name === currentMedName);
+    const nextTime = new Date(timestamp + currentMed.interval * 60 * 60 * 1000);
+    document.getElementById('modal-next-time').innerText = nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    document.getElementById('punch-modal').classList.remove('hidden');
+    updateStatusDisplay();
+  }
+
+  function undoLastPunch() {
+    const savedHistory = localStorage.getItem('med_history_arr_en_' + currentMedName);
+    if (savedHistory) {
+      let historyArr = JSON.parse(savedHistory);
+      if (historyArr.length > 0) {
+        historyArr.pop();
+        localStorage.setItem('med_history_arr_en_' + currentMedName, JSON.stringify(historyArr));
+      }
+    }
+    closeModal(); updateStatusDisplay();
+    alert('Successfully undone!');
+  }
+
+  function closeModal() { document.getElementById('punch-modal').classList.add('hidden'); }
+
+  function toggleHistoryZone() {
+    showHistory = !showHistory;
+    const box = document.getElementById('history-log-box');
+    if (showHistory) { box.classList.remove('hidden'); renderHistoryList(); } 
+    else { box.classList.add('hidden'); }
+  }
+
+  function setHistoryFilter(mode) {
+    historyFilterMode = mode;
+    document.getElementById('filter-all').classList.remove('active');
+    document.getElementById('filter-current').classList.remove('active');
+    document.getElementById('filter-' + mode).classList.add('active');
+    renderHistoryList();
+  }
+
+  function renderHistoryList() {
+    const itemsContainer = document.getElementById('history-list-items');
+    if (medications.length === 0) { itemsContainer.innerHTML = 'No medication data'; return; }
+
+    let combinedHistory = [];
+    const nowMs = new Date().getTime(); 
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+
+    if (historyFilterMode === 'all') {
+      medications.forEach(med => {
+        const saved = localStorage.getItem('med_history_arr_en_' + med.name);
+        if (saved) {
+          const arr = JSON.parse(saved);
+          arr.forEach(ts => {
+            if ((nowMs - ts) <= threeDaysMs) {
+              combinedHistory.push({ ts: ts, name: med.name, icon: med.icon });
+            }
+          });
+        }
+      });
+    } else {
+      if (!currentMedName) return;
+      const currentMed = medications.find(m => m.name === currentMedName);
+      const saved = localStorage.getItem('med_history_arr_en_' + currentMedName);
+      if (saved) {
+        const arr = JSON.parse(saved);
+        arr.forEach(ts => {
+          if ((nowMs - ts) <= threeDaysMs) {
+            combinedHistory.push({ ts: ts, name: currentMed.name, icon: currentMed.icon });
+          }
+        });
+      }
+    }
+
+    combinedHistory.sort((a, b) => b.ts - a.ts);
+
+    if (combinedHistory.length === 0) { 
+      itemsContainer.innerHTML = 'No records in the last 3 days.'; 
+      return; 
+    }
+
+    itemsContainer.innerHTML = combinedHistory.map(item => {
+      const d = new Date(item.ts);
+      const dateStr = d.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'});
+      const timeStr = d.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+      return `
+        <div class="history-item">
+          <div class="history-time">🗓️ ${dateStr} ${timeStr}</div>
+          <div class="history-med-name">${item.icon || '💊'} ${item.name}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateStatusDisplay() {
+    const noticeDiv = document.getElementById('med-notice');
+    const statusDiv = document.getElementById('status-container');
+    if (!currentMedName) {
+      noticeDiv.innerText = 'Please add a medication first.'; statusDiv.innerHTML = 'No medication data.'; return;
+    }
+    
+    const currentMed = medications.find(m => m.name === currentMedName);
+    noticeDiv.innerText = currentMed.notice ? currentMed.notice : 'No special instructions.';
+    
+    const savedHistory = localStorage.getItem('med_history_arr_en_' + currentMedName);
+    let historyArr = savedHistory ? JSON.parse(savedHistory) : [];
+    
+    if (historyArr.length === 0) {
+      statusDiv.innerHTML = `<strong>【${currentMed.icon || '💊'} ${currentMedName}】</strong><br>No records yet!`;
+      if(showHistory) renderHistoryList(); return;
+    }
+    
+    const lastPunchTime = new Date(historyArr[historyArr.length - 1]);
+    const nextTime = new Date(lastPunchTime.getTime() + currentMed.interval * 60 * 60 * 1000);
+    const now = new Date();
+    
+    let timeText = `⏱️ Last taken: ${lastPunchTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}<br>`;
+    timeText += `🔔 Next dose: ${nextTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})} (in ${currentMed.interval} hrs)<br>`;
+    
+    if (now >= nextTime) {
+      timeText += `<span class="alert">⚠️ Time for your next dose!</span>`;
+    } else {
+      const diffMins = Math.ceil((nextTime - now) / (1000 * 60));
+      if (diffMins > 60) {
+        timeText += `<span class="ok">✅ Wait ${Math.floor(diffMins / 60)} hr ${diffMins % 60} min until next dose.</span>`;
+      } else {
+        timeText += `<span class="ok">✅ Wait ${diffMins} min until next dose.</span>`;
+      }
+    }
+    statusDiv.innerHTML = `<strong>【${currentMed.icon || '💊'} ${currentMedName}】</strong><br>` + timeText;
+    if (showHistory) renderHistoryList();
+  }
+
+  window.onload = initSystem; setInterval(updateStatusDisplay, 60000);
+</script>
+</body>
+</html>
