@@ -155,10 +155,15 @@
   .form-group input, .form-group select { 
     width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 18px; box-sizing: border-box; background: #fff;
   }
+  
   .action-btn {
     width: 100%; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: 15px;
   }
-  .save-name-btn {
+  .action-btn.update-mode {
+    background: #ff9800;
+  }
+
+  .save-btn {
     background: #2196F3; color: white; border: none; border-radius: 12px; padding: 0 20px; font-size: 18px; font-weight: bold; cursor: pointer; white-space: nowrap;
   }
   
@@ -166,6 +171,8 @@
   .manager-item { 
     display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f9f9f9; border-radius: 12px; margin-bottom: 12px; font-size: 18px;
   }
+  .btn-group { display: flex; gap: 8px; }
+  .edit-btn { background: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
   .delete-btn { background: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
 
   .export-box {
@@ -217,18 +224,18 @@
   <div id="main-view" style="display:flex; flex-direction:column; height:100%;">
     <button class="settings-toggle" onclick="toggleView(true)">⚙️ Settings</button>
     
-    <h2>💊 Pill Reminder</h2>
-    <div class="greeting-text" id="main-greeting">😊 Hello There! 👋🏻</div>
+    <h2>💊 Med Tracker</h2>
+    <div class="greeting-text" id="main-greeting">😊 Hello, Sir/Madam! 👋🏻</div>
 
     <div class="med-options" id="med-buttons-container"></div>
 
     <div class="notice-box">
-      <div class="notice-title">💡 Instructions / Notes:</div>
+      <div class="notice-title">💡 Notes / Instructions:</div>
       <div id="med-notice">No special instructions.</div>
     </div>
 
     <div class="punch-container">
-      <button class="punch-btn" onclick="punchMedicine()">Log Meds</button>
+      <button class="punch-btn" onclick="punchMedicine()">Log Dose</button>
     </div>
 
     <div class="status-box" id="status-container">
@@ -239,7 +246,7 @@
       <button class="history-toggle-btn" onclick="toggleHistoryZone()">📊 View Last 3 Days</button>
       <div id="history-log-box" class="history-log-box hidden">
         <div class="history-filter">
-          <button id="filter-all" class="filter-btn active" onclick="setHistoryFilter('all')">Show All</button>
+          <button id="filter-all" class="filter-btn active" onclick="setHistoryFilter('all')">All Meds</button>
           <button id="filter-current" class="filter-btn" onclick="setHistoryFilter('current')">Current Med Only</button>
         </div>
         <div class="history-list-container" id="history-list-items">No records available.</div>
@@ -256,20 +263,22 @@
         <label>👤 Display Name</label>
         <div style="display: flex; gap: 10px;">
           <input type="text" id="setting-user-name" placeholder="e.g., Dad, Mom">
-          <button class="save-name-btn" onclick="saveUserName()">Save</button>
+          <button class="save-btn" onclick="saveUserName()">Save</button>
         </div>
       </div>
       <div class="form-group" style="margin-bottom: 0;">
         <label>🔐 Admin Password</label>
         <div style="display: flex; gap: 10px;">
           <input type="text" id="setting-password" placeholder="e.g., 1234">
-          <button class="save-name-btn" onclick="savePassword()">Save</button>
+          <button class="save-btn" onclick="savePassword()">Save</button>
         </div>
       </div>
     </div>
     
-    <div class="setup-form">
-      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;">➕ Add Medication</h3>
+    <div class="setup-form" id="form-scroll-target">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;" id="form-title">➕ Add Medication</h3>
+      <input type="hidden" id="edit-index" value="-1">
+      
       <div class="form-group">
         <label>Medication Name</label>
         <input type="text" id="new-med-name" placeholder="e.g., Blood Pressure Med">
@@ -287,17 +296,17 @@
       </div>
       
       <div class="form-group">
-        <label>Frequency / Times per Day</label>
+        <label>Frequency</label>
         <select id="new-med-interval">
-          <option value="24">Once a day (Every 24 hrs)</option>
-          <option value="12">Twice a day (Every 12 hrs)</option>
-          <option value="5" selected>3 times a day (With meals, ~5 hrs)</option>
-          <option value="4">4 times a day (Meals + Bedtime, ~4 hrs)</option>
+          <option value="24">Once daily (Every 24 hrs)</option>
+          <option value="12">Twice daily (Every 12 hrs)</option>
+          <option value="5" selected>3 times daily (With meals)</option>
+          <option value="4">4 times daily (Every 4-6 hrs)</option>
           <option disabled>──────────────</option>
-          <option value="4">Strictly every 4 hours</option>
-          <option value="5">Strictly every 5 hours</option>
-          <option value="6">Strictly every 6 hours</option>
-          <option value="8">Strictly every 8 hours</option>
+          <option value="4">Strictly every 4 hrs</option>
+          <option value="5">Strictly every 5 hrs</option>
+          <option value="6">Strictly every 6 hrs</option>
+          <option value="8">Strictly every 8 hrs</option>
         </select>
       </div>
       
@@ -305,51 +314,51 @@
         <label>Notes / Instructions</label>
         <input type="text" id="new-med-notice" placeholder="e.g., Take after meals">
       </div>
-      <button class="action-btn" onclick="addMedication()">Add Medication</button>
+      <button class="action-btn" id="add-update-btn" onclick="saveMedication()">Save Medication</button>
+    </div>
+
+    <div class="med-manager-list">
+      <h3 style="margin-bottom: 15px; font-size: 20px;">My Medications:</h3>
+      <div id="manager-items-container"></div>
     </div>
 
     <div class="export-box">
       <div class="export-title">🖨️ Export History</div>
       <div class="export-desc">Download all records as a CSV (Excel) file for easy printing and doctor visits.</div>
-      <button class="export-btn" onclick="exportFullHistory()">📄 Download Full Record</button>
+      <button class="export-btn" onclick="exportFullHistory()">📄 Download CSV</button>
     </div>
 
     <div class="training-box">
-      <div class="training-title">🛠️ Training Mode / Reset</div>
-      <div class="training-desc">Let the user practice taking meds. Once done, click below to clear practice records.</div>
+      <div class="training-title">🛠️ Practice Mode / Reset</div>
+      <div class="training-desc">Let the user practice logging doses. Once done, tap below to clear practice records.</div>
       <button class="reset-btn" onclick="clearTrainingData()">🧹 Clear Current Med Records</button>
     </div>
 
-    <div class="med-manager-list">
-      <h3 style="margin-bottom: 15px; font-size: 20px;">Tracked Medications:</h3>
-      <div id="manager-items-container"></div>
-    </div>
   </div>
 </div>
 
 <div id="punch-modal" class="modal-overlay hidden">
   <div class="modal-content">
-    <div class="modal-title">✅ Logged Successfully!</div>
+    <div class="modal-title">✅ Dose Logged!</div>
     <div class="modal-subtitle">Next dose at:</div>
     <div class="modal-time" id="modal-next-time">18:00</div>
     <button class="close-modal-btn" onclick="closeModal()">Got it</button>
-    <button class="undo-modal-btn" onclick="undoLastPunch()">❌ Undo (Mistake)</button>
+    <button class="undo-modal-btn" onclick="undoLastPunch()">❌ Undo Log</button>
   </div>
 </div>
 
 <script>
   const defaultMedications = [
-    { name: 'Cold Medicine', interval: 5, notice: '3 times a day, after meals.', icon: '💊' },
-    { name: 'Blood Pressure Med', interval: 24, notice: 'Once a day, in the morning.', icon: '🔴' }
+    { name: 'Cold Med', interval: 5, notice: '3 times daily, after meals.', icon: '💊' },
+    { name: 'Blood Pressure Med', interval: 24, notice: 'Once daily, in the morning.', icon: '🔴' }
   ];
 
   let medications = [];
   let currentMedName = '';
   let showHistory = false;
-  let userName = 'There';
+  let userName = 'Sir/Madam';
   let historyFilterMode = 'all';
-  // 🌟 預設密碼改為 1234
-  let systemPassword = '1234'; 
+  let systemPassword = '1234';
 
   function playDingSound() {
     try {
@@ -382,7 +391,6 @@
     document.getElementById('setting-user-name').value = userName;
     updateGreetingDisplay();
 
-    // 🌟 讀取自訂密碼
     const storedPwd = localStorage.getItem('med_system_password_en');
     if (storedPwd) systemPassword = storedPwd;
     document.getElementById('setting-password').value = systemPassword;
@@ -400,7 +408,7 @@
   }
 
   function updateGreetingDisplay() {
-    document.getElementById('main-greeting').innerText = `😊 Hello ${userName}! 👋🏻`;
+    document.getElementById('main-greeting').innerText = `😊 Hello, ${userName}! 👋🏻`;
   }
 
   function saveUserName() {
@@ -409,10 +417,9 @@
     userName = newName;
     localStorage.setItem('med_user_name_en', userName);
     updateGreetingDisplay();
-    alert(`✅ Name updated successfully to "${userName}"!`);
+    alert(`✅ Name updated to "${userName}"!`);
   }
 
-  // 🌟 儲存新密碼的功能
   function savePassword() {
     const newPwd = document.getElementById('setting-password').value.trim();
     if (!newPwd) { alert("Password cannot be empty!"); return; }
@@ -423,8 +430,7 @@
 
   function toggleView(showSettings) {
     if (showSettings) {
-      const pwd = prompt("🔐 Enter password for settings:");
-      // 🌟 比對的密碼改成變數，不再寫死
+      const pwd = prompt("🔐 Enter Admin Password:");
       if (pwd !== systemPassword) {
         if (pwd !== null) alert("❌ Incorrect password!");
         return; 
@@ -451,10 +457,10 @@
   }
 
   function getFrequencyText(interval) {
-    if (interval === 24) return 'Once a day (24 hrs)';
-    if (interval === 12) return 'Twice a day (12 hrs)';
-    if (interval === 5) return 'Every 5 hrs / 3 times a day';
-    if (interval === 4) return 'Every 4 hrs / 4 times a day';
+    if (interval === 24) return 'Once daily';
+    if (interval === 12) return 'Twice daily';
+    if (interval === 5) return '3 times daily';
+    if (interval === 4) return 'Every 4 hrs';
     if (interval === 6) return 'Every 6 hrs';
     if (interval === 8) return 'Every 8 hrs';
     return `Every ${interval} hrs`;
@@ -471,28 +477,81 @@
           <strong>${med.icon || '💊'} ${med.name}</strong> (${getFrequencyText(med.interval)})<br>
           <span style="font-size:15px; color:#666;">📝 ${med.notice || 'No notes'}</span>
         </div>
-        <button class="delete-btn" onclick="deleteMedication(${index})">Delete</button>
+        <div class="btn-group">
+          <button class="edit-btn" onclick="editMedication(${index})">✏️ Edit</button>
+          <button class="delete-btn" onclick="deleteMedication(${index})">Delete</button>
+        </div>
       `;
       container.appendChild(item);
     });
   }
 
-  function addMedication() {
+  function editMedication(index) {
+    const med = medications[index];
+    document.getElementById('new-med-name').value = med.name;
+    document.getElementById('new-med-icon').value = med.icon || '💊';
+    document.getElementById('new-med-interval').value = med.interval;
+    document.getElementById('new-med-notice').value = med.notice || '';
+    
+    document.getElementById('edit-index').value = index;
+    
+    const btn = document.getElementById('add-update-btn');
+    btn.innerText = 'Update Medication';
+    btn.classList.add('update-mode');
+    document.getElementById('form-title').innerText = '✏️ Edit Medication Info';
+    
+    document.getElementById('form-scroll-target').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function saveMedication() {
     const nameInput = document.getElementById('new-med-name');
     const iconSelect = document.getElementById('new-med-icon');
     const intervalSelect = document.getElementById('new-med-interval');
     const noticeInput = document.getElementById('new-med-notice');
-    const name = nameInput.value.trim(); const icon = iconSelect.value;
-    const interval = parseInt(intervalSelect.value); const notice = noticeInput.value.trim();
+    
+    const name = nameInput.value.trim(); 
+    const icon = iconSelect.value;
+    const interval = parseInt(intervalSelect.value); 
+    const notice = noticeInput.value.trim();
+    const editIndex = parseInt(document.getElementById('edit-index').value);
     
     if (!name) { alert('Please enter a medication name!'); return; }
-    if (medications.some(m => m.name === name)) { alert('Medication already exists!'); return; }
+
+    if (editIndex === -1) {
+      if (medications.some(m => m.name === name)) { alert('Medication already exists!'); return; }
+      medications.push({ name, interval, notice, icon });
+      alert(`Successfully added "${name}"!`);
+    } else {
+      const oldName = medications[editIndex].name;
+      
+      if (oldName !== name && medications.some(m => m.name === name)) {
+        alert('This name is already used by another medication!'); return;
+      }
+      
+      if (oldName !== name) {
+        const oldHistory = localStorage.getItem('med_history_arr_en_' + oldName);
+        if (oldHistory) {
+          localStorage.setItem('med_history_arr_en_' + name, oldHistory);
+          localStorage.removeItem('med_history_arr_en_' + oldName);
+        }
+        if (currentMedName === oldName) currentMedName = name;
+      }
+      
+      medications[editIndex] = { name, interval, notice, icon };
+      alert(`Successfully updated "${name}"!`);
+      
+      document.getElementById('edit-index').value = -1;
+      const btn = document.getElementById('add-update-btn');
+      btn.innerText = 'Save Medication';
+      btn.classList.remove('update-mode');
+      document.getElementById('form-title').innerText = '➕ Add Medication';
+    }
     
-    medications.push({ name, interval, notice, icon });
     localStorage.setItem('user_medications_en', JSON.stringify(medications));
-    nameInput.value = ''; noticeInput.value = ''; currentMedName = name; 
+    nameInput.value = ''; noticeInput.value = ''; 
+    if (editIndex === -1) currentMedName = name; 
+    
     renderMainButtons(); renderManagerList();
-    alert(`Successfully added "${name}"!`);
   }
 
   function deleteMedication(index) {
@@ -508,7 +567,7 @@
 
   function clearTrainingData() {
     if (!currentMedName) { alert("No medication selected!"); return; }
-    if (confirm(`Are you sure you want to clear all records for [${currentMedName}]?\nUse this to reset after practice.`)) {
+    if (confirm(`Are you sure you want to clear all records for [${currentMedName}]?`)) {
       localStorage.removeItem('med_history_arr_en_' + currentMedName);
       alert(`✅ All records cleared. Ready to start fresh!`);
       if (showHistory) renderHistoryList();
@@ -581,7 +640,7 @@
     
     const currentMed = medications.find(m => m.name === currentMedName);
     const nextTime = new Date(timestamp + currentMed.interval * 60 * 60 * 1000);
-    document.getElementById('modal-next-time').innerText = nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    document.getElementById('modal-next-time').innerText = nextTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
     document.getElementById('punch-modal').classList.remove('hidden');
     updateStatusDisplay();
   }
@@ -596,7 +655,7 @@
       }
     }
     closeModal(); updateStatusDisplay();
-    alert('Successfully undone!');
+    alert('Log undone successfully!');
   }
 
   function closeModal() { document.getElementById('punch-modal').classList.add('hidden'); }
@@ -692,8 +751,8 @@
     const nextTime = new Date(lastPunchTime.getTime() + currentMed.interval * 60 * 60 * 1000);
     const now = new Date();
     
-    let timeText = `⏱️ Last taken: ${lastPunchTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}<br>`;
-    timeText += `🔔 Next dose: ${nextTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})} (in ${currentMed.interval} hrs)<br>`;
+    let timeText = `⏱️ Last Dose: ${lastPunchTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}<br>`;
+    timeText += `🔔 Next Dose: ${nextTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})} (in ${currentMed.interval} hrs)<br>`;
     
     if (now >= nextTime) {
       timeText += `<span class="alert">⚠️ Time for your next dose!</span>`;
